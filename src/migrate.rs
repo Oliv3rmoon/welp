@@ -117,6 +117,14 @@ fn import_settings(text: &str) -> Config {
             }
             "exclude_rules" => config.exclude_rules = python_list(value),
             "slow_commands" => config.slow_commands = python_list(value),
+            // `rules = DEFAULT_RULES + ['rm_root']` turns extra rules on.
+            "rules" => {
+                config.enable_rules = python_list(
+                    value
+                        .trim_start_matches("DEFAULT_RULES")
+                        .trim_start_matches([' ', '+']),
+                )
+            }
             _ => {}
         }
     }
@@ -194,5 +202,7 @@ mod tests {
         assert!(!config.require_confirmation);
         assert_eq!(config.wait_command, 5);
         assert_eq!(config.exclude_rules, ["sudo", "git_push"]);
+        let extra = import_settings("rules = DEFAULT_RULES + ['rm_root']\n");
+        assert_eq!(extra.enable_rules, ["rm_root"]);
     }
 }

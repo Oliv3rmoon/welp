@@ -19,6 +19,9 @@ pub struct Config {
     pub no_rerun: Vec<String>,
     /// Rules that are turned off, by name.
     pub exclude_rules: Vec<String>,
+    /// Rules that are off by default because their fix can destroy
+    /// something (`rm_root`, `git_push_force`, ...), turned on by name.
+    pub enable_rules: Vec<String>,
     /// `chill` (the default), `spicy` or `quiet`.
     pub voice: Voice,
     /// Same as `voice = "quiet"`; kept so older configs work.
@@ -45,6 +48,7 @@ impl Default for Config {
             .map(String::from)
             .to_vec(),
             exclude_rules: Vec::new(),
+            enable_rules: Vec::new(),
             voice: Voice::Chill,
             quiet: false,
             remember: true,

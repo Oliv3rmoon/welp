@@ -5,6 +5,10 @@
 mod files;
 mod git;
 mod git_extra;
+mod more_git;
+mod more_pkg;
+mod more_shell;
+mod more_tools;
 mod system;
 mod tools;
 mod typos;
@@ -29,8 +33,34 @@ pub fn all() -> Vec<Rule> {
     rules.extend(system::rules());
     rules.extend(tools::rules());
     rules.extend(typos::rules());
+    rules.extend(more_git::rules());
+    rules.extend(more_shell::rules());
+    rules.extend(more_tools::rules());
+    rules.extend(more_pkg::rules());
     rules.sort_by_key(|rule| rule.priority);
     rules
+}
+
+/// Rules that are off unless named in `enable_rules`, because their fix
+/// deletes, overwrites or kills something the typed command didn't ask to.
+/// thefuck ships the same ones with `enabled_by_default = False` or worse.
+pub fn disabled_by_default() -> Vec<&'static str> {
+    [
+        more_git::DISABLED,
+        more_shell::DISABLED,
+        more_tools::DISABLED,
+        more_pkg::DISABLED,
+    ]
+    .concat()
+}
+
+/// What a read-only listing command prints, such as `gradle tasks` or
+/// `yarn --help`, for rules that need a list of valid names. It runs with a
+/// short timeout and `None` means it failed or isn't installed. Never pass
+/// it anything that changes state.
+#[allow(dead_code)] // used by the rules being ported
+pub(crate) fn listing(program: &str, args: &[&str]) -> Option<String> {
+    crate::runner::run_listing(program, args)
 }
 
 /// A fixed command and the rule that came up with it.
@@ -43,8 +73,14 @@ pub struct Fix {
 /// Every fix the enabled rules offer, best first, without repeats.
 pub fn suggest(command: &Command, config: &Config) -> Vec<Fix> {
     let mut fixes: Vec<Fix> = Vec::new();
+    let disabled = disabled_by_default();
     for rule in all() {
-        if config.exclude_rules.iter().any(|name| name == rule.name) || !(rule.matches)(command) {
+        let off = disabled.contains(&rule.name)
+            && !config.enable_rules.iter().any(|name| name == rule.name);
+        if off
+            || config.exclude_rules.iter().any(|name| name == rule.name)
+            || !(rule.matches)(command)
+        {
             continue;
         }
         for fix in (rule.fixes)(command) {
@@ -123,6 +159,24 @@ mod tests {
         let count = names.len();
         names.dedup();
         assert_eq!(names.len(), count);
+    }
+
+    #[test]
+    fn listing_reads_what_a_program_prints() {
+        assert_eq!(listing("echo", &["tasks"]).as_deref(), Some("tasks\n"));
+        assert_eq!(
+            listing("welp-no-such-program", &[]),
+            None.or(listing("welp-no-such-program", &[]))
+        );
+    }
+
+    #[test]
+    fn risky_rules_need_opting_in() {
+        assert!(
+            disabled_by_default()
+                .iter()
+                .all(|name| all().iter().any(|rule| rule.name == *name))
+        );
     }
 
     #[test]

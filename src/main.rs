@@ -77,12 +77,12 @@ fn main() -> ExitCode {
         }
         Action::Rules => {
             for rule in rules::all() {
-                println!("{:<30}{}", rule.name, rule.description);
+                println!("{:<34}{}", rule.name, rule.description);
             }
             let dir = config::config_dir().join("rules");
             let (custom_rules, problems) = custom::load(&dir);
             for rule in &custom_rules {
-                println!("{:<30}{} (yours)", rule.name, rule.description);
+                println!("{:<34}{} (yours)", rule.name, rule.description);
             }
             for problem in problems {
                 ui::say(&format!("skipped {problem}"));
@@ -94,22 +94,26 @@ fn main() -> ExitCode {
 
 fn fix(command: Option<String>, yes: bool) -> ExitCode {
     let config = Config::load();
-    let script = command.or_else(|| {
-        let history = env::var("WELP_HISTORY").unwrap_or_default();
-        let mut lines: Vec<&str> = history.lines().collect();
-        if env::var_os("WELP_NEWEST_FIRST").is_some() {
-            lines.reverse();
-        }
-        let alias = env::var("WELP_ALIAS").unwrap_or_else(|_| "welp".into());
-        command::last_command(&lines, &alias).map(str::to_string)
-    });
+    let history = env::var("WELP_HISTORY").unwrap_or_default();
+    let mut lines: Vec<&str> = history.lines().collect();
+    if env::var_os("WELP_NEWEST_FIRST").is_some() {
+        lines.reverse();
+    }
+    let alias = env::var("WELP_ALIAS").unwrap_or_else(|_| "welp".into());
+    let from_history = command.is_none();
+    let script = command.or_else(|| command::last_command(&lines, &alias).map(str::to_string));
     let Some(script) = script else {
         ui::say(voice::NOTHING_TO_FIX);
         return ExitCode::FAILURE;
     };
+    // The commands before this one, oldest first, for rules that look back.
+    let mut recent = command::recent(&lines, &alias);
+    if from_history && recent.last() == Some(&script) {
+        recent.pop();
+    }
 
     let output = runner::capture_output(&script, &config);
-    let command = Command::new(&script, &output);
+    let command = Command::new(&script, &output).with_history(recent);
     let (custom_rules, _) = custom::load(&config::config_dir().join("rules"));
     let yours = |first: bool| -> Vec<rules::Fix> {
         custom_rules

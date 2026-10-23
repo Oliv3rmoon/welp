@@ -4,6 +4,9 @@ pub struct Command {
     pub script: String,
     pub parts: Vec<String>,
     pub output: String,
+    /// Recent commands, oldest first, without the one being fixed. Empty
+    /// unless the shell passed history in.
+    pub history: Vec<String>,
 }
 
 impl Command {
@@ -15,7 +18,13 @@ impl Command {
             script,
             parts,
             output: output.to_string(),
+            history: Vec::new(),
         }
+    }
+
+    pub fn with_history(mut self, history: Vec<String>) -> Self {
+        self.history = history;
+        self
     }
 
     /// The program name, skipping a leading `sudo`.
@@ -68,6 +77,19 @@ pub fn last_command<'a>(history: &'a [&'a str], alias: &str) -> Option<&'a str> 
     })
 }
 
+/// History lines, oldest first, without blank lines or calls to welp.
+pub fn recent(history: &[&str], alias: &str) -> Vec<String> {
+    history
+        .iter()
+        .map(|line| line.trim())
+        .filter(|line| {
+            let first = line.split_whitespace().next().unwrap_or("");
+            !line.is_empty() && first != alias && first != "welp"
+        })
+        .map(String::from)
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -76,6 +98,14 @@ mod tests {
     fn program_skips_sudo() {
         assert_eq!(Command::new("sudo apt install x", "").program(), "apt");
         assert_eq!(Command::new("git push", "").program(), "git");
+    }
+
+    #[test]
+    fn recent_drops_welp_calls() {
+        assert_eq!(
+            recent(&["ls", " ", "fuck", "gti status"], "fuck"),
+            ["ls", "gti status"]
+        );
     }
 
     #[test]

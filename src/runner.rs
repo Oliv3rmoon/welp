@@ -63,6 +63,30 @@ pub fn capture_output(script: &str, config: &Config) -> String {
     String::from_utf8_lossy(&reader.join().unwrap_or_default()).into_owned()
 }
 
+/// Runs a read-only listing command (`gradle tasks`, `yarn --help`) and
+/// returns what it printed, or `None` if it couldn't run or took over 3 s.
+#[allow(dead_code)] // used by the rules being ported
+pub fn run_listing(program: &str, args: &[&str]) -> Option<String> {
+    let on_path = std::env::var_os("PATH")
+        .is_some_and(|path| std::env::split_paths(&path).any(|dir| dir.join(program).is_file()));
+    if !on_path {
+        return None;
+    }
+    let script = std::iter::once(program)
+        .chain(args.iter().copied())
+        .map(|word| shell_words::quote(word).into_owned())
+        .collect::<Vec<_>>()
+        .join(" ");
+    let config = Config {
+        wait_command: 3,
+        no_rerun: Vec::new(),
+        slow_commands: Vec::new(),
+        ..Config::default()
+    };
+    let output = capture_output(&script, &config);
+    (!output.trim().is_empty()).then_some(output)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
