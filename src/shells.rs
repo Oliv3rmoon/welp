@@ -82,7 +82,7 @@ impl Shell {
         command welp $argv
         return
     end
-    set -l fix (env WELP_ALIAS={alias} WELP_NEWEST_FIRST=1 WELP_HISTORY=(history --max 10 | string collect) command welp fix $yes)
+    set -l fix (env WELP_ALIAS={alias} WELP_NEWEST_FIRST=1 WELP_HISTORY=(history --max 10 | string collect) welp fix $yes)
     or return
     test -n "$fix"; or return
     builtin history append -- $fix 2>/dev/null
@@ -149,6 +149,9 @@ mod tests {
                 "{shell:?}"
             );
         }
+        // `env` runs a program, so it must not be asked to run the builtin
+        // `command` (only macOS has a program by that name).
+        assert!(!Shell::Fish.script("fuck").contains("env WELP_ALIAS=fuck WELP_NEWEST_FIRST=1 WELP_HISTORY=(history --max 10 | string collect) command"));
         // tcsh passes the alias's arguments straight through.
         assert!(Shell::Tcsh.script("fuck").contains("welp fix \\!*"));
     }
