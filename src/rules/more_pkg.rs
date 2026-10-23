@@ -91,7 +91,7 @@ pub fn rules() -> Vec<Rule> {
                     .map(|found| brew_suggestions(&found[1]))
                     .unwrap_or_default()
                     .iter()
-                    .map(|formula| format!("brew install {}", shell_words::quote(formula)))
+                    .map(|formula| format!("brew install {}", crate::command::quote(formula)))
                     .collect()
             },
         },
@@ -160,7 +160,7 @@ pub fn rules() -> Vec<Rule> {
                     .map(|found| {
                         format!(
                             "nix-env -iA {} && {}",
-                            shell_words::quote(&found[1]),
+                            crate::command::quote(&found[1]),
                             c.script
                         )
                     })

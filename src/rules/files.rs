@@ -19,7 +19,7 @@ pub fn rules() -> Vec<Rule> {
             priority: 1000,
             matches: |c| c.is("cd") && target(c).is_some_and(|dir| !Path::new(dir).exists()),
             fixes: |c| {
-                let dir = shell_words::quote(target(c).unwrap_or_default()).into_owned();
+                let dir = crate::command::quote(target(c).unwrap_or_default());
                 vec![format!("mkdir -p {dir} && cd {dir}")]
             },
         },
@@ -80,7 +80,7 @@ pub fn rules() -> Vec<Rule> {
                     .filter_map(|path| Path::new(path).parent())
                     .filter(|parent| !parent.as_os_str().is_empty() && !parent.exists())
                     .map(|parent| {
-                        let parent = shell_words::quote(&parent.to_string_lossy()).into_owned();
+                        let parent = crate::command::quote(&parent.to_string_lossy());
                         format!("mkdir -p {parent} && {}", c.script)
                     })
                     .take(1)
@@ -115,7 +115,7 @@ pub fn rules() -> Vec<Rule> {
             fixes: |c| {
                 local_script(c)
                     .map(|script| {
-                        replace_program(&c.script, &format!("./{}", shell_words::quote(script)))
+                        replace_program(&c.script, &format!("./{}", crate::command::quote(script)))
                     })
                     .into_iter()
                     .collect()
@@ -219,7 +219,7 @@ fn corrected_cd(target: &str) -> Option<String> {
             _ => {
                 let found = closest_dir(&here, name)?;
                 here.push(&found);
-                shown.push(shell_words::quote(&found).into_owned());
+                shown.push(crate::command::quote(&found));
             }
         }
     }
@@ -347,7 +347,7 @@ mod tests {
         path.components()
             .filter_map(|part| match part {
                 std::path::Component::Normal(name) => {
-                    Some(shell_words::quote(&name.to_string_lossy()).into_owned())
+                    Some(crate::command::quote(&name.to_string_lossy()))
                 }
                 _ => None,
             })

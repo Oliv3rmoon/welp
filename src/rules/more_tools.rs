@@ -151,7 +151,7 @@ pub fn rules() -> Vec<Rule> {
                     .map(|id| {
                         format!(
                             "docker container rm -f {} && {}",
-                            shell_words::quote(id),
+                            crate::command::quote(id),
                             c.script
                         )
                     })
@@ -372,7 +372,7 @@ pub fn rules() -> Vec<Rule> {
                     .map(|found| {
                         format!(
                             "pip install {} && {}",
-                            shell_words::quote(&found[1]),
+                            crate::command::quote(&found[1]),
                             c.script
                         )
                     })
@@ -1315,7 +1315,7 @@ fn vagrant_up(command: &Command) -> Vec<String> {
         Some(machine) => vec![
             format!(
                 "vagrant up {} && {}",
-                shell_words::quote(machine),
+                crate::command::quote(machine),
                 command.script
             ),
             everything,
@@ -1356,7 +1356,10 @@ fn workon_fixes(command: &Command, envs: &[String]) -> Vec<String> {
         return Vec::new();
     };
     let mut fixes = replace_command(&command.script, misspelled, envs);
-    fixes.push(format!("mkvirtualenv {}", shell_words::quote(misspelled)));
+    fixes.push(format!(
+        "mkvirtualenv {}",
+        crate::command::quote(misspelled)
+    ));
     fixes
 }
 
@@ -1382,7 +1385,7 @@ fn yarn_alias(command: &Command) -> Vec<String> {
 /// thefuck's `open_command`: xdg-open where there is one, `open` (macOS) otherwise.
 fn open_command(url: &str, has_xdg_open: bool) -> String {
     let opener = if has_xdg_open { "xdg-open" } else { "open" };
-    format!("{opener} {}", shell_words::quote(url))
+    format!("{opener} {}", crate::command::quote(url))
 }
 
 #[cfg(test)]

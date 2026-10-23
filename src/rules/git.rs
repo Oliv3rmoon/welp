@@ -150,7 +150,7 @@ fn git_checkout(command: &Command) -> Vec<String> {
     } else {
         "checkout -b"
     };
-    vec![format!("git {create} {}", shell_words::quote(branch))]
+    vec![format!("git {create} {}", crate::command::quote(branch))]
 }
 
 #[cfg(test)]

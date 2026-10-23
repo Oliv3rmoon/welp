@@ -366,7 +366,7 @@ fn git_branch_0flag(c: &Command) -> Vec<String> {
         // `-d`, so a branch with work that nothing merged is left alone
         return vec![format!(
             "git branch -d {} && {fixed}",
-            shell_words::quote(zero)
+            crate::command::quote(zero)
         )];
     }
     vec![fixed]

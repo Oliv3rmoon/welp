@@ -70,7 +70,7 @@ pub fn rules() -> Vec<Rule> {
             fixes: |c| {
                 c.parts
                     .last()
-                    .map(|dest| format!("mkdir -p {} && {}", shell_words::quote(dest), c.script))
+                    .map(|dest| format!("mkdir -p {} && {}", crate::command::quote(dest), c.script))
                     .into_iter()
                     .collect()
             },
@@ -246,7 +246,7 @@ pub fn rules() -> Vec<Rule> {
             matches: |c| missing_folder(c).is_some(),
             fixes: |c| {
                 missing_folder(c)
-                    .map(|dir| format!("mkdir -p {} && {}", shell_words::quote(&dir), c.script))
+                    .map(|dir| format!("mkdir -p {} && {}", crate::command::quote(&dir), c.script))
                     .into_iter()
                     .collect()
             },
@@ -804,7 +804,7 @@ fn untar_folder(c: &Command) -> Option<String> {
                 .find_map(|extension| part.strip_suffix(extension))
         })
         .filter(|stem| !stem.is_empty())
-        .map(|stem| shell_words::quote(stem).into_owned())
+        .map(crate::command::quote)
 }
 
 /// How many files a zip archive holds, read from the end of the archive.
@@ -844,7 +844,7 @@ fn unzip_folder(c: &Command, entries: impl Fn(&str) -> Option<usize>) -> Option<
         return None;
     }
     let stem = archive.strip_suffix(".zip")?;
-    (!stem.is_empty()).then(|| shell_words::quote(stem).into_owned())
+    (!stem.is_empty()).then(|| crate::command::quote(stem))
 }
 
 // ---------------------------------------------------------------------------
@@ -862,7 +862,10 @@ fn is_file(path: &str) -> bool {
 
 /// The editor on the line of the file, then the command again.
 fn open_at(editor: &str, file: &str, line: &str, script: &str) -> String {
-    format!("{editor} {} +{line} && {script}", shell_words::quote(file))
+    format!(
+        "{editor} {} +{line} && {script}",
+        crate::command::quote(file)
+    )
 }
 
 /// How errors say where they happened; the first pattern that finds a file
@@ -897,7 +900,8 @@ static ERROR_LOCATIONS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     .iter()
     .map(|pattern| {
         let pattern = pattern
-            .replace("{file}", r"(?P<file>[^:\n]+)")
+            // An optional `C:` so Windows paths keep their drive.
+            .replace("{file}", r"(?P<file>(?:[A-Za-z]:)?[^:\n]+)")
             .replace("{line}", "(?P<line>[0-9]+)")
             .replace("{col}", "(?P<col>[0-9]+)");
         Regex::new(&format!("(?m){pattern}")).unwrap()
@@ -1319,11 +1323,11 @@ fn ssh_known_hosts(c: &Command) -> Vec<String> {
         return Vec::new();
     };
     let file = file
-        .map(|file| format!(" -f {}", shell_words::quote(&file)))
+        .map(|file| format!(" -f {}", crate::command::quote(&file)))
         .unwrap_or_default();
     vec![format!(
         "ssh-keygen{file} -R {} && {}",
-        shell_words::quote(&host),
+        crate::command::quote(&host),
         c.script
     )]
 }
@@ -1802,7 +1806,7 @@ mod tests {
             fixes("dirty_unzip", &format!("unzip {path}"), ""),
             [format!(
                 "unzip {path} -d {}",
-                shell_words::quote(path.strip_suffix(".zip").unwrap())
+                crate::command::quote(path.strip_suffix(".zip").unwrap())
             )]
         );
     }

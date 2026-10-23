@@ -32,7 +32,13 @@ pub fn rules() -> Vec<Rule> {
             },
             fixes: |c| {
                 missing_file(c)
-                    .map(|file| format!("git add -- {} && {}", shell_words::quote(&file), c.script))
+                    .map(|file| {
+                        format!(
+                            "git add -- {} && {}",
+                            crate::command::quote(&file),
+                            c.script
+                        )
+                    })
                     .into_iter()
                     .collect()
             },
@@ -225,7 +231,7 @@ fn git_branch_exists(command: &Command) -> Vec<String> {
     let Some(branch) = existing_branch(command) else {
         return Vec::new();
     };
-    let branch = shell_words::quote(&branch);
+    let branch = crate::command::quote(&branch);
     vec![
         format!("git branch -d {branch} && git branch {branch}"),
         format!("git branch -d {branch} && git checkout -b {branch}"),

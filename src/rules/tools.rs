@@ -163,7 +163,7 @@ fn with_args(command: &Command, put: &[&str], from: usize) -> String {
         .map(String::as_str)
         .chain(put.iter().copied())
         .chain(args(command).iter().skip(from).map(String::as_str))
-        .map(|part| shell_words::quote(part).into_owned())
+        .map(crate::command::quote)
         .collect::<Vec<_>>()
         .join(" ")
 }

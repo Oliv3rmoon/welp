@@ -23,7 +23,7 @@ pub fn rules() -> Vec<Rule> {
             fixes: |c| {
                 vec![format!(
                     "chmod +x {} && {}",
-                    shell_words::quote(&c.parts[0]),
+                    crate::command::quote(&c.parts[0]),
                     c.script
                 )]
             },
