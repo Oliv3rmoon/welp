@@ -17,7 +17,7 @@ proc run {text} {
 proc fix {} {
     global prompt
     run "welp"
-    expect "ctrl+c]"
+    expect "esc nah"
     sleep 1.4
     send "\r"
 }

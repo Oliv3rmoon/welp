@@ -17,6 +17,8 @@ pub struct Config {
     pub no_rerun: Vec<String>,
     /// Rules that are turned off, by name.
     pub exclude_rules: Vec<String>,
+    /// Keeps welp's occasional one-liners to itself.
+    pub quiet: bool,
 }
 
 impl Default for Config {
@@ -36,6 +38,7 @@ impl Default for Config {
             .map(String::from)
             .to_vec(),
             exclude_rules: Vec::new(),
+            quiet: false,
         }
     }
 }

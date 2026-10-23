@@ -1,6 +1,7 @@
 <h1 align="center">welp</h1>
 
 <p align="center"><b>Typed it wrong? Type <code>welp</code>.</b><br>
+It fixes the command you just messed up, and doesn't make a big deal about it.<br>
 A fast, single-binary successor to <a href="https://github.com/nvbn/thefuck">thefuck</a>, with a one-command move from it.</p>
 
 <p align="center">
@@ -11,24 +12,22 @@ A fast, single-binary successor to <a href="https://github.com/nvbn/thefuck">the
 <p align="center"><img src="docs/demo.gif" alt="welp fixing a mistyped command, a git push with no upstream, a mkdir with missing folders and cd.." width="900"></p>
 
 ```console
-$ gti push
+project ❯ gti status
 zsh: command not found: gti
-$ welp
-git push [enter/↑/↓/ctrl+c]
-fatal: The current branch feature has no upstream branch.
-$ welp
-git push --set-upstream origin feature [enter/↑/↓/ctrl+c]
+project ❯ welp
+ welp  git status  ↵ run · esc nah
 ```
 
 ## Why welp
 
-thefuck is one of the most-loved command-line tools ever made, but it has had no release since January 2022 and breaks on Python 3.12 and newer (`No module named 'imp'`). welp keeps what made it great and fixes what didn't:
+thefuck is one of the most-loved command-line tools ever made. It has also had no release since January 2022, and it breaks on Python 3.12 and newer (`No module named 'imp'`). welp keeps what made it great and quietly fixes the rest:
 
 - **No Python.** One small binary that starts instantly, on any Python version or none.
 - **Safe.** welp never runs destructive or interactive commands (`rm`, `mv`, `dd`, editors, `ssh`, ...) a second time just to read their output. Rules that need to know more look at your files instead.
 - **Moves your setup for you.** `welp migrate` switches your shell config, keeps your alias (yes, `fuck` still works) and imports your settings.
 - **Same rule names.** Your thefuck `exclude_rules` keep working.
 - **Workplace-friendly name.** Use whatever alias you like.
+- **A little personality.** Lowercase, low-key, and the occasional "happens to the best of us." Set `quiet = true` if you'd rather it just did its job.
 
 ## Install
 
@@ -96,7 +95,10 @@ wait_slow_command = 15
 slow_commands = ["lein", "react-native", "gradle", "./gradlew", "vagrant"]
 no_rerun = ["rm", "mv", "dd", "vim", "ssh"]  # never run these twice (the full default list is longer)
 exclude_rules = []
+quiet = false                 # true keeps the occasional one-liners to itself
 ```
+
+Set `NO_COLOR` to drop the colours; welp keeps the words.
 
 ## Adding a rule
 

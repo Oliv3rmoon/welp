@@ -4,7 +4,9 @@ mod migrate;
 mod rules;
 mod runner;
 mod shells;
+mod style;
 mod ui;
+mod voice;
 
 use std::env;
 use std::process::ExitCode;
@@ -79,17 +81,17 @@ fn fix(command: Option<String>, yes: bool) -> ExitCode {
         command::last_command(&lines, &alias).map(str::to_string)
     });
     let Some(script) = script else {
-        eprintln!("welp: no command to fix");
+        ui::say(voice::NOTHING_TO_FIX);
         return ExitCode::FAILURE;
     };
 
     let output = runner::capture_output(&script, &config);
     let fixes = rules::suggest(&Command::new(&script, &output), &config);
     if fixes.is_empty() {
-        eprintln!("welp: no fix for `{script}`");
+        ui::say(voice::pick(voice::NO_FIX, voice::seed()));
         return ExitCode::FAILURE;
     }
-    match ui::pick(&fixes, config.require_confirmation && !yes) {
+    match ui::pick(&fixes, config.require_confirmation && !yes, config.quiet) {
         Some(fix) => {
             println!("{fix}");
             ExitCode::SUCCESS
@@ -100,43 +102,57 @@ fn fix(command: Option<String>, yes: bool) -> ExitCode {
 
 fn migrate(dry_run: bool) -> ExitCode {
     let Some(home) = dirs::home_dir() else {
-        eprintln!("welp: can't find your home folder");
+        ui::say("couldn't find your home folder.");
         return ExitCode::FAILURE;
     };
     let report = match migrate::migrate(&home, &config::config_path(), dry_run) {
         Ok(report) => report,
         Err(error) => {
-            eprintln!("welp: migration failed: {error}");
+            ui::say(&format!("migration failed: {error}"));
             return ExitCode::FAILURE;
         }
     };
-    let verb = if dry_run { "Would update" } else { "Updated" };
+    let short = |path: &std::path::Path| match path.strip_prefix(&home) {
+        Ok(rest) => format!("~/{}", rest.display()),
+        Err(_) => path.display().to_string(),
+    };
     if report.shell_files.is_empty() && !report.settings_imported {
-        println!("No thefuck setup found. Add welp with: eval \"$(welp init zsh)\"");
+        ui::say("no thefuck setup here. to set welp up, add this to your shell config:");
+        eprintln!("        eval \"$(welp init zsh)\"");
         return ExitCode::SUCCESS;
     }
     for path in &report.shell_files {
-        println!(
-            "{verb} {} (backup: {}.welp-backup)",
-            path.display(),
-            path.display()
-        );
-    }
-    if let Some(alias) = &report.alias {
         if dry_run {
-            println!("`{alias}` would run welp.");
+            ui::say(&format!("would update {}", short(path)));
         } else {
-            println!("`{alias}` now runs welp. Open a new terminal to use it.");
+            ui::say(&format!(
+                "updated {} (old one saved as {}.welp-backup)",
+                short(path),
+                short(path)
+            ));
         }
     }
     if report.settings_imported {
-        println!(
-            "{verb} {} from your thefuck settings",
-            config::config_path().display()
-        );
+        let config = short(&config::config_path());
+        if dry_run {
+            ui::say(&format!(
+                "would bring your thefuck settings over to {config}"
+            ));
+        } else {
+            ui::say(&format!("brought your thefuck settings over to {config}"));
+        }
     }
-    if !dry_run {
-        println!("You can now remove thefuck: pip uninstall thefuck (or brew uninstall thefuck)");
+    if let Some(alias) = &report.alias {
+        if dry_run {
+            ui::say(&format!("`{alias}` would run welp after that."));
+        } else {
+            ui::say(&format!(
+                "moved your thefuck setup over. `{alias}` still works, it just runs welp now."
+            ));
+            ui::say(
+                "open a new terminal to try it. thefuck can go: pip uninstall thefuck (or brew uninstall thefuck)",
+            );
+        }
     }
     ExitCode::SUCCESS
 }
