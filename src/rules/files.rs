@@ -103,7 +103,8 @@ pub fn rules() -> Vec<Rule> {
             description: "Fixes a misspelled folder in a cd path",
             // Ahead of cd_mkdir: a folder that is nearly there beats a new one.
             priority: 950,
-            matches: |c| cd_missing(c).is_some(),
+            // It rebuilds `/`-rooted paths, so it is for Unix paths only.
+            matches: |c| cfg!(unix) && cd_missing(c).is_some(),
             fixes: |c| cd_missing(c).and_then(corrected_cd).into_iter().collect(),
         },
         Rule {
@@ -353,6 +354,7 @@ mod tests {
             .join("/")
     }
 
+    #[cfg(unix)]
     #[test]
     fn cd_to_the_closest_folders() {
         let tmp = tempfile::tempdir().unwrap();
@@ -378,6 +380,7 @@ mod tests {
         );
     }
 
+    #[cfg(unix)]
     #[test]
     fn cd_correction_comes_before_cd_mkdir() {
         let tmp = tempfile::tempdir().unwrap();

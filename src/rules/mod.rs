@@ -163,7 +163,10 @@ mod tests {
 
     #[test]
     fn listing_reads_what_a_program_prints() {
-        assert_eq!(listing("echo", &["tasks"]).as_deref(), Some("tasks\n"));
+        assert_eq!(
+            listing("echo", &["tasks"]).as_deref().map(str::trim),
+            Some("tasks")
+        );
         assert_eq!(
             listing("welp-no-such-program", &[]),
             None.or(listing("welp-no-such-program", &[]))

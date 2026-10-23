@@ -12,8 +12,12 @@ pub struct Command {
 impl Command {
     pub fn new(script: &str, output: &str) -> Self {
         let script = script.trim().to_string();
-        let parts = shell_words::split(&script)
-            .unwrap_or_else(|_| script.split_whitespace().map(String::from).collect());
+        let parts = if windows_style() {
+            split_windows(&script)
+        } else {
+            shell_words::split(&script)
+                .unwrap_or_else(|_| script.split_whitespace().map(String::from).collect())
+        };
         Self {
             script,
             parts,
@@ -65,6 +69,42 @@ impl Command {
     }
 }
 
+/// PowerShell and Windows paths use `\\` as a separator, not an escape.
+fn windows_style() -> bool {
+    cfg!(windows) || std::env::var("WELP_SHELL").is_ok_and(|shell| shell == "powershell")
+}
+
+/// Splits on spaces outside quotes, keeping backslashes as they are.
+fn split_windows(script: &str) -> Vec<String> {
+    let mut parts = Vec::new();
+    let mut current = String::new();
+    let mut quote: Option<char> = None;
+    let mut started = false;
+    for c in script.chars() {
+        match (quote, c) {
+            (Some(open), _) if c == open => quote = None,
+            (None, '\'' | '"') => {
+                quote = Some(c);
+                started = true;
+            }
+            (None, c) if c.is_whitespace() => {
+                if started {
+                    parts.push(std::mem::take(&mut current));
+                    started = false;
+                }
+            }
+            _ => {
+                current.push(c);
+                started = true;
+            }
+        }
+    }
+    if started {
+        parts.push(current);
+    }
+    parts
+}
+
 /// Picks the command to fix out of recent history: the newest entry that
 /// is not a call to the alias itself.
 pub fn last_command<'a>(history: &'a [&'a str], alias: &str) -> Option<&'a str> {
@@ -93,6 +133,14 @@ pub fn recent(history: &[&str], alias: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn windows_split_keeps_backslashes() {
+        assert_eq!(
+            split_windows(r#"python C:\Users\me\foo "My Docs\a b.txt" ''"#),
+            ["python", r"C:\Users\me\foo", r"My Docs\a b.txt", ""]
+        );
+    }
 
     #[test]
     fn program_skips_sudo() {

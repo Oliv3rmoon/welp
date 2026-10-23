@@ -372,7 +372,7 @@ mod tests {
 
     #[test]
     fn mistyped_program() {
-        let fixes = fixes_for("welp-not-a-real-program-x", "");
+        let fixes = fixes_for("zqxv-not-a-real-program", "");
         assert!(fixes.is_empty());
         assert_eq!(fixes_for("sl", "")[0], "ls");
     }
