@@ -1,0 +1,24 @@
+#!/usr/bin/expect -f
+# Drives a real interactive shell the way a person would: set up welp with
+# the `fuck` alias, mistype a command, then run `fuck --yeah` and check the
+# fixed command ran. Usage: expect ci/shell.exp bash|zsh|fish|tcsh
+set shell [lindex $argv 0]
+set timeout 30
+log_user 1
+switch -- $shell {
+    bash { spawn bash --norc --noprofile -i; set init {eval "$(welp init bash --alias fuck)"} }
+    zsh  { spawn zsh -f -i; set init {eval "$(welp init zsh --alias fuck)"} }
+    fish { spawn fish -i --no-config; set init {welp init fish --alias fuck | source} }
+    tcsh { spawn tcsh -f -i; set init {eval `welp init tcsh --alias fuck`} }
+    default { puts "unknown shell $shell"; exit 2 }
+}
+sleep 1
+send -- "$init\r"
+sleep 1
+send -- "gti --version\r"
+sleep 1
+send -- "fuck --yeah\r"
+expect {
+    -re {git version [0-9]} { puts "\n== $shell: fixed and ran git --version"; send -- "exit\r"; exit 0 }
+    timeout { puts "\n== $shell: no fix ran"; exit 1 }
+}

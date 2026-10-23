@@ -20,21 +20,18 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
-      - name: PowerShell setup loads and fixes a command
-        if: runner.os == 'Windows'
+      - run: cargo build
+      - name: Install fish, zsh, tcsh and expect (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fish zsh tcsh expect
+      - name: Install fish (macOS)
+        if: runner.os == 'macOS'
+        run: brew install fish
+      - name: Every shell fixes a typo from its own history
+        if: runner.os != 'Windows'
+        run: PATH="$PWD/target/debug:$PATH" WELP_REQUIRE_ALL=1 sh ci/shells.sh
+      - name: PowerShell fixes a typo from its own history
         shell: pwsh
         run: |
-          cargo build
-          $env:PATH = "$PWD\target\debug;$env:PATH"
-          Invoke-Expression (& welp init powershell --alias fuck | Out-String)
-          if (-not (Get-Command fuck -CommandType Function)) { throw "fuck function missing" }
-          $fix = & welp fix "gti --version" --yes
-          if ($fix -ne "git --version") { throw "expected git --version, got: $fix" }
-      - name: tcsh setup fixes a command
-        if: runner.os == 'macOS'
-        run: |
-          cargo build
-          export PATH="$PWD/target/debug:$PATH" NO_COLOR=1
-          out=$(printf 'eval `welp init tcsh --alias fuck`\ngti --version\nfuck --yeah\nexit\n' | tcsh -f -i 2>&1)
-          echo "$out"
-          echo "$out" | grep -q "git version"
+          $env:PATH = (Join-Path $PWD 'target/debug') + [IO.Path]::PathSeparator + $env:PATH
+          ./ci/powershell.ps1

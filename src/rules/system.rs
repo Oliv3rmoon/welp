@@ -72,9 +72,14 @@ pub fn rules() -> Vec<Rule> {
                 let says_missing = output.is_empty()
                     || output.lines().any(|line| {
                         line.contains(&program.to_lowercase())
-                            && ["not found", "unknown command", "no such file or directory"]
-                                .iter()
-                                .any(|text| line.contains(text))
+                            && [
+                                "not found",
+                                "unknown command",
+                                "no such file or directory",
+                                "is not recognized",
+                            ]
+                            .iter()
+                            .any(|text| line.contains(text))
                     });
                 !program.is_empty()
                     && !program.contains('/')
@@ -368,6 +373,19 @@ mod tests {
         assert_eq!(closest_programs("gti", &known)[0], "git");
         assert_eq!(closest_programs("pyhton3", &known), ["python3"]);
         assert!(closest_programs("zzzz", &known).is_empty());
+    }
+
+    #[test]
+    fn powershell_and_cmd_say_not_recognized() {
+        for output in [
+            "gti: The term 'gti' is not recognized as a name of a cmdlet, function, script file, or executable program.",
+            "'gti' is not recognized as an internal or external command,",
+        ] {
+            assert!(
+                crate::rules::rule_matches("no_command", "gti --version", output),
+                "{output}"
+            );
+        }
     }
 
     #[test]

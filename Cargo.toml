@@ -2,7 +2,7 @@
 name = "welp"
 version = "0.3.0"
 edition = "2024"
-description = "Fixes the command you just typed wrong. A fast successor to thefuck."
+description = "Fixes the command you just typed wrong. A drop-in replacement for thefuck: every rule, every shell, no Python."
 license = "MIT"
 repository = "https://github.com/Oliv3rmoon/welp"
 readme = "README.md"

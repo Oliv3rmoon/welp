@@ -2,7 +2,7 @@
 
 <p align="center"><b>Typed it wrong? Type <code>welp</code>.</b><br>
 It fixes the command you just messed up, shrugs, and moves on.<br>
-The fast, friendly successor to <a href="https://github.com/nvbn/thefuck">thefuck</a>, with a one-command move from it.</p>
+A drop-in replacement for <a href="https://github.com/nvbn/thefuck">thefuck</a>: every rule, every shell, no Python, and one command to switch.</p>
 
 <p align="center">
 <a href="https://crates.io/crates/welp"><img src="https://img.shields.io/crates/v/welp?color=FFCC4D&labelColor=141414" alt="crates.io"></a>
@@ -33,11 +33,20 @@ thefuck is one of the most-loved command-line tools ever made. It has also had n
 | Moves your setup over | | `welp migrate` keeps your alias and settings |
 | Your own rules | Python files | TOML files, no code needed |
 | Rules | 168 | all 168, same names, plus `did_you_mean`; the 7 that can destroy something are opt-in |
-| Personality | the name | a shrug, three voices, `welp stats` |
+| Personality | a memorable name | a shrug mascot, three voices, milestones, `welp stats` |
 | Shells | bash, zsh, fish, tcsh, PowerShell | bash, zsh, fish, tcsh, PowerShell |
 | Install | `pip` | `brew`, `cargo`, or a download for macOS, Linux and Windows |
 
-Speed measured on a MacBook Pro with `welp fix`; your numbers will vary. Rule names match thefuck's, so your `exclude_rules` keep working.
+Speed measured on a MacBook Pro with `welp fix`; your numbers will vary.
+
+### Everything thefuck does, welp does
+
+- [x] All 168 rules, under the same names, so `exclude_rules` and `rules` from your thefuck settings keep working
+- [x] bash, zsh, fish, tcsh and PowerShell, each tested in CI by mistyping a command and running `fuck --yeah`
+- [x] `fuck`, `fuck --yeah` / `-y`, and picking between fixes with the arrow keys
+- [x] macOS, Linux and Windows
+- [x] Your own rules (TOML here instead of Python)
+- [x] Your settings: `welp migrate` moves `settings.py`, your alias and your shell config over in one go
 
 ## Meet the voice
 
