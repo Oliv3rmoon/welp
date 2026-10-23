@@ -10,7 +10,7 @@ The fast, friendly successor to <a href="https://github.com/nvbn/thefuck">thefuc
 <a href="https://discord.gg/pSqgRU3YP9"><img src="https://img.shields.io/badge/Discord-The%20Commons-5865F2?style=flat&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
-<p align="center"><img src="docs/demo.gif" alt="welp fixing a mistyped command, a git push with no upstream, a mkdir with missing folders and cd.." width="900"></p>
+<p align="center"><img src="docs/demo.gif" alt="welp fixing a mistyped command, a git push with no upstream, a mkdir with missing folders and cd.., then showing welp stats" width="900"></p>
 
 ```console
 project ❯ gti status

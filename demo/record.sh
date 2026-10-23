@@ -7,7 +7,7 @@ set -e
 here="$(cd "$(dirname "$0")" && pwd)"
 root=/tmp/welp-demo
 sh "$here/setup.sh" "$root"
-export PATH="$here/../target/release:$PATH" ZDOTDIR="$root/zdotdir" GIT_CONFIG_GLOBAL=/dev/null TERM=xterm-256color
+export PATH="$here/../target/release:$PATH" ZDOTDIR="$root/zdotdir" GIT_CONFIG_GLOBAL=/dev/null TERM=xterm-256color XDG_STATE_HOME="$root/state" XDG_CONFIG_HOME="$root/config"
 cd "$root/project"
 printf '\033[H\033[2J'
 if [ -n "$1" ]; then while [ ! -f "$1" ]; do sleep 0.1; done; fi

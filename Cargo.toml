@@ -1,6 +1,6 @@
 [package]
 name = "welp"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 description = "Fixes the command you just typed wrong. A fast successor to thefuck."
 license = "MIT"

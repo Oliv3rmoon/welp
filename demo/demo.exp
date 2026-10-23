@@ -31,5 +31,7 @@ run "mkdir src/components/ui"
 fix
 run "cd.."
 fix
+run "welp stats"
+expect "verdict"
 expect $prompt
-sleep 2.5
+sleep 3
