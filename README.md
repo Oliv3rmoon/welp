@@ -32,6 +32,7 @@ thefuck is one of the most-loved command-line tools ever made. It has also had n
 | `fuck --yeah` | yes | yes |
 | Moves your setup over | | `welp migrate` keeps your alias and settings |
 | Your own rules | Python files | TOML files, no code needed |
+| Rules | about 170 | 52 so far: the everyday git, file, package and typo fixes |
 | Personality | the name | a shrug, three voices, `welp stats` |
 | Shells | bash, zsh, fish, tcsh, PowerShell | bash, zsh, fish |
 

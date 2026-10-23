@@ -111,7 +111,7 @@ pub fn rules() -> Vec<Rule> {
         Rule {
             name: "missing_space_before_subcommand",
             description: "Adds the missing space after a program name: gitbranch to git branch",
-            priority: 4000,
+            priority: 2900,
             matches: |c| unspaced(c).is_some(),
             fixes: |c| {
                 unspaced(c)

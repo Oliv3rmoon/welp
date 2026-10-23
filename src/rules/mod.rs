@@ -134,3 +134,34 @@ mod tests {
         assert!(suggest(&Command::new("sl", ""), &config).is_empty());
     }
 }
+
+#[cfg(test)]
+mod ordering {
+    use super::*;
+
+    #[test]
+    fn a_missing_space_beats_a_far_fetched_typo() {
+        let missing = all()
+            .into_iter()
+            .find(|rule| rule.name == "missing_space_before_subcommand")
+            .unwrap();
+        let typo = all()
+            .into_iter()
+            .find(|rule| rule.name == "no_command")
+            .unwrap();
+        assert!(missing.priority < typo.priority);
+    }
+
+    #[test]
+    fn switching_to_main_beats_creating_master() {
+        let main_master = all()
+            .into_iter()
+            .find(|rule| rule.name == "git_main_master")
+            .unwrap();
+        let checkout = all()
+            .into_iter()
+            .find(|rule| rule.name == "git_checkout")
+            .unwrap();
+        assert!(main_master.priority < checkout.priority);
+    }
+}

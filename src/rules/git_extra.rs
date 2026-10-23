@@ -81,7 +81,7 @@ pub fn rules() -> Vec<Rule> {
         Rule {
             name: "git_main_master",
             description: "Swaps main and master when the branch is not there",
-            priority: 1200,
+            priority: 950,
             matches: |c| {
                 c.is("git") && (c.output.contains("'master'") || c.output.contains("'main'"))
             },
