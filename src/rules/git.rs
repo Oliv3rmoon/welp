@@ -70,7 +70,7 @@ pub fn rules() -> Vec<Rule> {
     ]
 }
 
-fn has_word(command: &Command, word: &str) -> bool {
+pub(super) fn has_word(command: &Command, word: &str) -> bool {
     command.parts.iter().any(|part| part == word)
 }
 
@@ -160,13 +160,14 @@ mod tests {
     #[test]
     fn push_sets_upstream() {
         let output = "fatal: The current branch feature has no upstream branch.\nTo push the current branch and set the remote as upstream, use\n\n    git push --set-upstream origin feature\n";
+        // first, ahead of the weaker guesses that follow it
         assert_eq!(
-            fixes_for("git push", output),
-            ["git push --set-upstream origin feature"]
+            fixes_for("git push", output)[0],
+            "git push --set-upstream origin feature"
         );
         assert_eq!(
-            fixes_for("git push --force", output),
-            ["git push --set-upstream origin feature --force"]
+            fixes_for("git push --force", output)[0],
+            "git push --set-upstream origin feature --force"
         );
     }
 
