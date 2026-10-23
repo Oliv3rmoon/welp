@@ -93,7 +93,7 @@ fn fix(command: Option<String>, yes: bool) -> ExitCode {
     }
     match ui::pick(&fixes, config.require_confirmation && !yes, config.quiet) {
         Some(fix) => {
-            println!("{fix}");
+            println!("{}", fix.command);
             ExitCode::SUCCESS
         }
         None => ExitCode::FAILURE,

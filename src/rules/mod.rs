@@ -29,17 +29,30 @@ pub fn all() -> Vec<Rule> {
     rules
 }
 
+/// A fixed command and the rule that came up with it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Fix {
+    pub command: String,
+    pub rule: String,
+}
+
 /// Every fix the enabled rules offer, best first, without repeats.
-pub fn suggest(command: &Command, config: &Config) -> Vec<String> {
-    let mut fixes: Vec<String> = Vec::new();
+pub fn suggest(command: &Command, config: &Config) -> Vec<Fix> {
+    let mut fixes: Vec<Fix> = Vec::new();
     for rule in all() {
         if config.exclude_rules.iter().any(|name| name == rule.name) || !(rule.matches)(command) {
             continue;
         }
         for fix in (rule.fixes)(command) {
             let fix = fix.trim().to_string();
-            if !fix.is_empty() && fix != command.script && !fixes.contains(&fix) {
-                fixes.push(fix);
+            if !fix.is_empty()
+                && fix != command.script
+                && !fixes.iter().any(|known| known.command == fix)
+            {
+                fixes.push(Fix {
+                    command: fix,
+                    rule: rule.name.to_string(),
+                });
             }
         }
     }
@@ -49,6 +62,9 @@ pub fn suggest(command: &Command, config: &Config) -> Vec<String> {
 #[cfg(test)]
 pub(crate) fn fixes_for(script: &str, output: &str) -> Vec<String> {
     suggest(&Command::new(script, output), &Config::default())
+        .into_iter()
+        .map(|fix| fix.command)
+        .collect()
 }
 
 #[cfg(test)]

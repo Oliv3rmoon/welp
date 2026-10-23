@@ -3,22 +3,26 @@ use std::io::{self, Write};
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use crossterm::terminal;
 
+use crate::rules::Fix;
 use crate::style::Paint;
 use crate::voice;
 
 /// Shows the fixes on the terminal and returns the one the user picks.
 /// Everything is drawn on stderr: stdout carries the answer to the shell.
-pub fn pick(fixes: &[String], confirm: bool, quiet: bool) -> Option<String> {
+pub fn pick(fixes: &[Fix], confirm: bool, quiet: bool) -> Option<Fix> {
     let first = fixes.first()?;
     let paint = Paint::from_env();
     let mut err = io::stderr();
     if !confirm {
-        chosen(&mut err, paint, first, quiet);
+        chosen(&mut err, paint, &first.command, quiet);
         return Some(first.clone());
     }
 
     if terminal::enable_raw_mode().is_err() {
-        let line = format!("would run: {first} (no terminal to ask in. `welp fix --yes` runs it)");
+        let line = format!(
+            "would run: {} (no terminal to ask in. `welp fix --yes` runs it)",
+            first.command
+        );
         let _ = writeln!(err, "{}", paint.line(&line));
         return None;
     }
@@ -29,7 +33,7 @@ pub fn pick(fixes: &[String], confirm: bool, quiet: bool) -> Option<String> {
             "\r\x1b[2K{}",
             paint.line(&format!(
                 "{}  {}",
-                paint.fix(&fixes[index]),
+                paint.fix(&fixes[index].command),
                 hints(paint, index, fixes.len())
             ))
         );
@@ -55,7 +59,7 @@ pub fn pick(fixes: &[String], confirm: bool, quiet: bool) -> Option<String> {
     let _ = terminal::disable_raw_mode();
     let _ = write!(err, "\r\x1b[2K");
     match &choice {
-        Some(fix) => chosen(&mut err, paint, fix, quiet),
+        Some(fix) => chosen(&mut err, paint, &fix.command, quiet),
         None => {
             let _ = writeln!(err, "{}", paint.line(&paint.dim(voice::ABORTED)));
         }
