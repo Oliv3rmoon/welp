@@ -27,6 +27,7 @@
 
 use std::fs;
 use std::io::{Read, Seek, SeekFrom};
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::sync::LazyLock;
@@ -615,8 +616,13 @@ pub(super) fn args(c: &Command) -> &[String] {
 }
 
 fn is_executable(path: &Path) -> bool {
-    path.metadata()
-        .is_ok_and(|meta| meta.is_file() && meta.permissions().mode() & 0o111 != 0)
+    #[cfg(unix)]
+    return path
+        .metadata()
+        .is_ok_and(|meta| meta.is_file() && meta.permissions().mode() & 0o111 != 0);
+    // Windows has no execute bit; any file can be run by its extension.
+    #[cfg(not(unix))]
+    return path.is_file();
 }
 
 fn is_executable_on_path(name: &str) -> bool {
