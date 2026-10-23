@@ -392,6 +392,7 @@ mod tests {
         assert!(fixes[1].starts_with("mkdir -p "));
     }
 
+    #[cfg(unix)]
     #[test]
     fn cd_correction_matches_what_thefuck_matches() {
         for (script, output) in [

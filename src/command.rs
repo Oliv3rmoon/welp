@@ -61,11 +61,25 @@ impl Command {
                     done = true;
                     new.to_string()
                 } else {
-                    shell_words::quote(part).into_owned()
+                    quote(part)
                 }
             })
             .collect();
         parts.join(" ")
+    }
+}
+
+/// Quotes a word for the user's shell when it needs it. Windows paths and
+/// PowerShell keep their backslashes and only get quotes around spaces.
+pub fn quote(word: &str) -> String {
+    if windows_style() {
+        if word.contains(char::is_whitespace) || word.is_empty() {
+            format!("'{}'", word.replace('\'', "''"))
+        } else {
+            word.to_string()
+        }
+    } else {
+        shell_words::quote(word).into_owned()
     }
 }
 

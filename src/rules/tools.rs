@@ -59,7 +59,7 @@ pub fn rules() -> Vec<Rule> {
             matches: |c| c.is("go") && go_file(c).is_some(),
             fixes: |c| {
                 go_file(c)
-                    .map(|file| c.replace_word(file, &format!("{}.go", shell_words::quote(file))))
+                    .map(|file| c.replace_word(file, &crate::command::quote(&format!("{file}.go"))))
                     .into_iter()
                     .collect()
             },
@@ -129,7 +129,7 @@ pub fn rules() -> Vec<Rule> {
             matches: |c| python_file(c).is_some(),
             fixes: |c| {
                 python_file(c)
-                    .map(|file| c.replace_word(file, &format!("{}.py", shell_words::quote(file))))
+                    .map(|file| c.replace_word(file, &crate::command::quote(&format!("{file}.py"))))
                     .into_iter()
                     .collect()
             },
