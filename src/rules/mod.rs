@@ -58,7 +58,6 @@ pub fn disabled_by_default() -> Vec<&'static str> {
 /// `yarn --help`, for rules that need a list of valid names. It runs with a
 /// short timeout and `None` means it failed or isn't installed. Never pass
 /// it anything that changes state.
-#[allow(dead_code)] // used by the rules being ported
 pub(crate) fn listing(program: &str, args: &[&str]) -> Option<String> {
     crate::runner::run_listing(program, args)
 }

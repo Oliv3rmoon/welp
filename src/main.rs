@@ -76,13 +76,30 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         Action::Rules => {
-            for rule in rules::all() {
-                println!("{:<34}{}", rule.name, rule.description);
-            }
+            let config = Config::load();
+            let disabled = rules::disabled_by_default();
             let dir = config::config_dir().join("rules");
             let (custom_rules, problems) = custom::load(&dir);
+            let all = rules::all();
+            let width = all
+                .iter()
+                .map(|rule| rule.name.len())
+                .chain(custom_rules.iter().map(|rule| rule.name.len()))
+                .max()
+                .unwrap_or(0)
+                + 2;
+            for rule in &all {
+                let off = disabled.contains(&rule.name)
+                    && !config.enable_rules.iter().any(|name| name == rule.name);
+                let note = if off {
+                    " (off until you add it to enable_rules)"
+                } else {
+                    ""
+                };
+                println!("{:<width$}{}{note}", rule.name, rule.description);
+            }
             for rule in &custom_rules {
-                println!("{:<34}{} (yours)", rule.name, rule.description);
+                println!("{:<width$}{} (yours)", rule.name, rule.description);
             }
             for problem in problems {
                 ui::say(&format!("skipped {problem}"));

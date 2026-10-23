@@ -122,7 +122,6 @@ pub fn find_in_path(program: &str) -> Option<PathBuf> {
 
 /// Runs a read-only listing command (`gradle tasks`, `yarn --help`) and
 /// returns what it printed, or `None` if it couldn't run or took over 3 s.
-#[allow(dead_code)] // used by the rules being ported
 pub fn run_listing(program: &str, args: &[&str]) -> Option<String> {
     find_in_path(program)?;
     let script = std::iter::once(program)
