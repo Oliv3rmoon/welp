@@ -72,7 +72,7 @@ It keeps only counts, rule names and the mistyped words, never your commands, in
 cargo install welp
 ```
 
-Homebrew and prebuilt binaries are coming.
+No Rust? Grab a prebuilt binary for macOS or Linux from the [releases page](https://github.com/Oliv3rmoon/welp/releases/latest), unpack it and put `welp` somewhere on your `PATH`. Homebrew is coming.
 
 ## Set up
 
