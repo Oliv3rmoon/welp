@@ -3,6 +3,11 @@
 <p align="center"><b>Typed it wrong? Type <code>welp</code>.</b><br>
 A fast, single-binary successor to <a href="https://github.com/nvbn/thefuck">thefuck</a>, with a one-command move from it.</p>
 
+<p align="center">
+<a href="https://buymeacoffee.com/oliv3rmoon"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=flat&logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
+<a href="https://discord.gg/pSqgRU3YP9"><img src="https://img.shields.io/badge/Discord-The%20Commons-5865F2?style=flat&logo=discord&logoColor=white" alt="Discord"></a>
+</p>
+
 <!-- TODO: demo GIF here (record with vhs or asciinema) -->
 
 ```console
@@ -111,7 +116,7 @@ Run `cargo test` before opening a pull request.
 
 ## Support
 
-If welp saves you some typing, you can [buy me a coffee](https://buymeacoffee.com/TODO) or come hang out on [Discord](https://discord.gg/TODO).
+If welp saves you some typing, you can [buy me a coffee](https://buymeacoffee.com/oliv3rmoon) or come hang out on [Discord](https://discord.gg/pSqgRU3YP9).
 
 ## Credits
 
