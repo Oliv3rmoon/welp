@@ -342,6 +342,7 @@ mod tests {
     }
 
     /// The path as the rule writes it: a quoted piece per folder.
+    #[cfg(unix)]
     fn written(path: &std::path::Path) -> String {
         path.components()
             .filter_map(|part| match part {
