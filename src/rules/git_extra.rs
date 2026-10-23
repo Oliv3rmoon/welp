@@ -350,7 +350,7 @@ mod tests {
         assert!(offers(
             "git checkout -b \"let's-push-this\"",
             "fatal: A branch named 'let's-push-this' already exists.",
-            "git checkout 'let'\\''s-push-this'"
+            &format!("git checkout {}", crate::command::quote("let's-push-this"))
         ));
         assert!(!rule_matches("git_branch_exists", "git branch foo", ""));
     }

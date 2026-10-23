@@ -462,7 +462,7 @@ fn git_flag_after_filename(c: &Command) -> Vec<String> {
     };
     let mut parts = c.parts.clone();
     parts.swap(flag_at, file_at);
-    vec![shell_words::join(parts)]
+    vec![crate::command::join(parts)]
 }
 
 fn git_lfs_mistype(c: &Command) -> Vec<String> {

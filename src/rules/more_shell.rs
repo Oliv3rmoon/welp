@@ -390,7 +390,7 @@ pub fn rules() -> Vec<Rule> {
                     return Vec::new();
                 };
                 std::mem::swap(service, action);
-                vec![format!("{}{}", sudo_prefix(c), shell_words::join(parts))]
+                vec![format!("{}{}", sudo_prefix(c), crate::command::join(parts))]
             },
         },
         Rule {
@@ -932,7 +932,7 @@ fn move_last(parts: &[String], file: &str) -> String {
         let file = moved.remove(at);
         moved.push(file);
     }
-    shell_words::join(moved)
+    crate::command::join(moved)
 }
 
 fn path_exists(path: &str) -> bool {
@@ -1138,7 +1138,7 @@ fn mercurial(c: &Command) -> Vec<String> {
         .map(|new| {
             let mut parts = Vec::from(skip_sudo(c));
             parts[1] = new;
-            format!("{}{}", sudo_prefix(c), shell_words::join(parts))
+            format!("{}{}", sudo_prefix(c), crate::command::join(parts))
         })
         .into_iter()
         .collect()
@@ -1250,7 +1250,7 @@ fn wrong_scm(c: &Command, actual: impl Fn() -> Option<&'static str>) -> Option<&
 }
 
 fn close_substitutions(parts: &[String]) -> String {
-    shell_words::join(parts.iter().map(|part| {
+    crate::command::join(parts.iter().map(|part| {
         if (part.starts_with("s/") || part.starts_with("-es/")) && !part.ends_with('/') {
             format!("{part}/")
         } else {

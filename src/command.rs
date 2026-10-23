@@ -73,7 +73,9 @@ impl Command {
 /// PowerShell keep their backslashes and only get quotes around spaces.
 pub fn quote(word: &str) -> String {
     if windows_style() {
-        if word.contains(char::is_whitespace) || word.is_empty() {
+        // PowerShell treats these as syntax; a single-quoted string doesn't.
+        let special = |c: char| c.is_whitespace() || "'\"`$;&|(){}<>@#,".contains(c);
+        if word.is_empty() || word.contains(special) {
             format!("'{}'", word.replace('\'', "''"))
         } else {
             word.to_string()
@@ -81,6 +83,19 @@ pub fn quote(word: &str) -> String {
     } else {
         shell_words::quote(word).into_owned()
     }
+}
+
+/// Joins words into a command line, quoting each one the user's shell's way.
+pub fn join<I, S>(words: I) -> String
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    words
+        .into_iter()
+        .map(|word| quote(word.as_ref()))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// PowerShell and Windows paths use `\\` as a separator, not an escape.
