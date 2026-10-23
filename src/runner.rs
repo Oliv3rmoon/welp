@@ -50,9 +50,9 @@ pub fn capture_output(script: &str, config: &Config) -> String {
             Ok(Some(_)) => break,
             Ok(None) if Instant::now() < deadline => thread::sleep(Duration::from_millis(10)),
             _ => {
+                // `--` so Linux's kill reads the negative number as a process group.
                 let _ = Process::new("kill")
-                    .arg("-KILL")
-                    .arg(format!("-{}", child.id()))
+                    .args(["-KILL", "--", &format!("-{}", child.id())])
                     .status();
                 let _ = child.kill();
                 let _ = child.wait();
