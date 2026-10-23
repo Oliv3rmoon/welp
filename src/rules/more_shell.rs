@@ -2588,7 +2588,6 @@ mod tests {
         for (script, fixed) in [
             ("sed -e s/foo/bar", "sed -e s/foo/bar/"),
             ("sed -es/foo/bar", "sed -es/foo/bar/"),
-            (r"sed -e 's/\/foo/bar'", r"sed -e 's/\/foo/bar/'"),
             (
                 "sed -e s/foo/bar -es/baz/quz",
                 "sed -e s/foo/bar/ -es/baz/quz/",
@@ -2596,6 +2595,11 @@ mod tests {
         ] {
             assert_eq!(fixes("sed_unterminated_s", script, output), [fixed]);
         }
+        // A backslash needs quotes in sh but not in PowerShell.
+        assert_eq!(
+            fixes("sed_unterminated_s", r"sed -e 's/\/foo/bar'", output),
+            [format!("sed -e {}", crate::command::quote(r"s/\/foo/bar/"))]
+        );
         assert!(!rule_matches("sed_unterminated_s", "sed -e s/foo/bar", ""));
         assert!(!rule_matches(
             "sed_unterminated_s",

@@ -73,9 +73,10 @@ impl Command {
 /// PowerShell keep their backslashes and only get quotes around spaces.
 pub fn quote(word: &str) -> String {
     if windows_style() {
-        // PowerShell treats these as syntax; a single-quoted string doesn't.
-        let special = |c: char| c.is_whitespace() || "'\"`$;&|(){}<>@#,".contains(c);
-        if word.is_empty() || word.contains(special) {
+        // PowerShell treats these as syntax anywhere in a word, and `@` or
+        // `#` at its start; a single-quoted string doesn't.
+        let special = |c: char| c.is_whitespace() || "'\"`$;&|(){}<>,".contains(c);
+        if word.is_empty() || word.contains(special) || word.starts_with(['@', '#']) {
             format!("'{}'", word.replace('\'', "''"))
         } else {
             word.to_string()
