@@ -3,6 +3,8 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
+use crate::voice::Voice;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
@@ -17,8 +19,13 @@ pub struct Config {
     pub no_rerun: Vec<String>,
     /// Rules that are turned off, by name.
     pub exclude_rules: Vec<String>,
-    /// Keeps welp's occasional one-liners to itself.
+    /// `chill` (the default), `spicy` or `quiet`.
+    pub voice: Voice,
+    /// Same as `voice = "quiet"`; kept so older configs work.
     pub quiet: bool,
+    /// Keep count of fixes and typos for `welp stats`. Only rule names and
+    /// mistyped words are saved, never your commands.
+    pub remember: bool,
 }
 
 impl Default for Config {
@@ -38,7 +45,9 @@ impl Default for Config {
             .map(String::from)
             .to_vec(),
             exclude_rules: Vec::new(),
+            voice: Voice::Chill,
             quiet: false,
+            remember: true,
         }
     }
 }
@@ -59,6 +68,10 @@ pub fn config_path() -> PathBuf {
 }
 
 impl Config {
+    pub fn voice(&self) -> Voice {
+        if self.quiet { Voice::Quiet } else { self.voice }
+    }
+
     pub fn load() -> Self {
         fs::read_to_string(config_path())
             .ok()

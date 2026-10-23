@@ -4,6 +4,7 @@ mod migrate;
 mod rules;
 mod runner;
 mod shells;
+mod stats;
 mod style;
 mod ui;
 mod voice;
@@ -50,6 +51,8 @@ enum Action {
     },
     /// List the rules.
     Rules,
+    /// Show what welp remembers about your typing.
+    Stats,
 }
 
 fn main() -> ExitCode {
@@ -60,6 +63,17 @@ fn main() -> ExitCode {
         }
         Action::Fix { command, yes } => fix(command, yes),
         Action::Migrate { dry_run } => migrate(dry_run),
+        Action::Stats => {
+            let config = Config::load();
+            for (index, line) in stats::Stats::load().card(config.voice()).iter().enumerate() {
+                if index == 0 {
+                    ui::say(line);
+                } else {
+                    ui::aside(line);
+                }
+            }
+            ExitCode::SUCCESS
+        }
         Action::Rules => {
             for rule in rules::all() {
                 println!("{:<24}{}", rule.name, rule.description);
@@ -87,17 +101,28 @@ fn fix(command: Option<String>, yes: bool) -> ExitCode {
 
     let output = runner::capture_output(&script, &config);
     let fixes = rules::suggest(&Command::new(&script, &output), &config);
+    let voice = config.voice();
     if fixes.is_empty() {
-        ui::say(voice::pick(voice::NO_FIX, voice::seed()));
+        ui::say(&voice::no_fix(voice, voice::seed()));
         return ExitCode::FAILURE;
     }
-    match ui::pick(&fixes, config.require_confirmation && !yes, config.quiet) {
-        Some(fix) => {
-            println!("{}", fix.command);
-            ExitCode::SUCCESS
-        }
-        None => ExitCode::FAILURE,
+    let Some(fix) = ui::pick(&fixes, config.require_confirmation && !yes) else {
+        return ExitCode::FAILURE;
+    };
+    let mut stats = if config.remember {
+        stats::Stats::load()
+    } else {
+        stats::Stats::default()
+    };
+    let memory = stats.record(&fix.rule, &script, &fix.command, stats::now());
+    if config.remember {
+        stats.save();
     }
+    if let Some(line) = voice::after_fix(&fix.rule, &memory, voice, voice::seed()) {
+        ui::aside(&line);
+    }
+    println!("{}", fix.command);
+    ExitCode::SUCCESS
 }
 
 fn migrate(dry_run: bool) -> ExitCode {

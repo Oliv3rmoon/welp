@@ -9,12 +9,12 @@ use crate::voice;
 
 /// Shows the fixes on the terminal and returns the one the user picks.
 /// Everything is drawn on stderr: stdout carries the answer to the shell.
-pub fn pick(fixes: &[Fix], confirm: bool, quiet: bool) -> Option<Fix> {
+pub fn pick(fixes: &[Fix], confirm: bool) -> Option<Fix> {
     let first = fixes.first()?;
     let paint = Paint::from_env();
     let mut err = io::stderr();
     if !confirm {
-        chosen(&mut err, paint, &first.command, quiet);
+        chosen(&mut err, paint, &first.command);
         return Some(first.clone());
     }
 
@@ -59,7 +59,7 @@ pub fn pick(fixes: &[Fix], confirm: bool, quiet: bool) -> Option<Fix> {
     let _ = terminal::disable_raw_mode();
     let _ = write!(err, "\r\x1b[2K");
     match &choice {
-        Some(fix) => chosen(&mut err, paint, &fix.command, quiet),
+        Some(fix) => chosen(&mut err, paint, &fix.command),
         None => {
             let _ = writeln!(err, "{}", paint.line(&paint.dim(voice::ABORTED)));
         }
@@ -73,11 +73,13 @@ pub fn say(text: &str) {
     eprintln!("{}", paint.line(text));
 }
 
-fn chosen(err: &mut io::Stderr, paint: Paint, fix: &str, quiet: bool) {
+/// A dimmed line under the one before it.
+pub fn aside(text: &str) {
+    eprintln!("{}", Paint::from_env().aside(text));
+}
+
+fn chosen(err: &mut io::Stderr, paint: Paint, fix: &str) {
     let _ = writeln!(err, "{}", paint.line(&paint.fix(fix)));
-    if let Some(aside) = voice::after_fix(voice::seed(), quiet) {
-        let _ = writeln!(err, "{}", paint.aside(aside));
-    }
 }
 
 fn hints(paint: Paint, index: usize, count: usize) -> String {
