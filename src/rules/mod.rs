@@ -128,7 +128,7 @@ mod tests {
     #[test]
     fn excluded_rules_are_skipped() {
         let config = Config {
-            exclude_rules: vec!["sl_ls".into()],
+            exclude_rules: vec!["sl_ls".into(), "no_command".into()],
             ..Config::default()
         };
         assert!(suggest(&Command::new("sl", ""), &config).is_empty());
