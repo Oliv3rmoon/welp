@@ -1,5 +1,6 @@
 mod command;
 mod config;
+mod custom;
 mod migrate;
 mod rules;
 mod runner;
@@ -76,7 +77,15 @@ fn main() -> ExitCode {
         }
         Action::Rules => {
             for rule in rules::all() {
-                println!("{:<24}{}", rule.name, rule.description);
+                println!("{:<30}{}", rule.name, rule.description);
+            }
+            let dir = config::config_dir().join("rules");
+            let (custom_rules, problems) = custom::load(&dir);
+            for rule in &custom_rules {
+                println!("{:<30}{} (yours)", rule.name, rule.description);
+            }
+            for problem in problems {
+                ui::say(&format!("skipped {problem}"));
             }
             ExitCode::SUCCESS
         }
@@ -100,7 +109,25 @@ fn fix(command: Option<String>, yes: bool) -> ExitCode {
     };
 
     let output = runner::capture_output(&script, &config);
-    let fixes = rules::suggest(&Command::new(&script, &output), &config);
+    let command = Command::new(&script, &output);
+    let (custom_rules, _) = custom::load(&config::config_dir().join("rules"));
+    let yours = |first: bool| -> Vec<rules::Fix> {
+        custom_rules
+            .iter()
+            .filter(|rule| rule.first == first && !config.exclude_rules.contains(&rule.name))
+            .flat_map(|rule| rule.fixes(&command))
+            .collect()
+    };
+    let mut fixes: Vec<rules::Fix> = Vec::new();
+    for fix in yours(true)
+        .into_iter()
+        .chain(rules::suggest(&command, &config))
+        .chain(yours(false))
+    {
+        if fix.command != script && !fixes.iter().any(|known| known.command == fix.command) {
+            fixes.push(fix);
+        }
+    }
     let voice = config.voice();
     if fixes.is_empty() {
         ui::say(&voice::no_fix(voice, voice::seed()));
