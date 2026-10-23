@@ -69,6 +69,20 @@ It comments out the thefuck lines in your shell config (with a backup next to ea
 | `git_checkout` | Creates the branch when it does not exist yet |
 | `git_branch_delete` | `-d` → `-D` for a branch that is not merged |
 | `git_commit_add` | Stages changed files when a commit has nothing staged |
+| `git_add` | Stages a file git does not know yet, then runs the command again |
+| `git_add_force` | Adds `--force` to stage a file your `.gitignore` covers |
+| `git_branch_exists` | Recreates or switches to a branch that already exists (`-d`, never `-D`) |
+| `git_clone_git_clone` | Drops the second `git clone` from a pasted command |
+| `git_hook_bypass` | Adds `--no-verify` to skip hooks on `am`, `commit` or `push` |
+| `git_main_master` | Swaps `main` and `master` when the branch is not there |
+| `git_merge` | Merges the remote branch git suggests |
+| `git_push_pull` | Pulls first when a push is rejected, then pushes |
+| `git_rebase_no_changes` | `git rebase --skip` for a patch that came out empty |
+| `git_remote_seturl_add` | `set-url` → `add` when the remote does not exist |
+| `git_rm_local_modifications` | Adds `--cached` to keep a file with local changes |
+| `git_rm_recursive` | Adds `-r` to remove a folder |
+| `git_rm_staged` | Adds `--cached` to keep a file with staged changes |
+| `git_stash` | Stashes your changes, then runs the command again |
 | `did_you_mean` | Uses the fix a tool suggests: cargo, npm, pip, brew, gh and more |
 | `sudo` | Runs the command again with sudo after "permission denied" |
 | `chmod_x` | Makes a script executable before running it |
@@ -81,6 +95,25 @@ It comments out the thefuck lines in your shell config (with a backup next to ea
 | `grep_recursive` | Adds `-r` to search a folder |
 | `touch` | Creates missing folders, then the file |
 | `sl_ls` | `sl` → `ls` |
+| `cat_dir` | `cat` on a folder → `ls` |
+| `cd_correction` | Fixes a misspelled folder in a `cd` path: `cd Documnets` → `cd Documents` |
+| `has_exists_script` | Runs a script in this folder with `./` |
+| `ln_no_hard_link` | Adds `-s` when a hard link to a folder is not allowed |
+| `man_no_space` | `mandiff` → `man diff` |
+| `missing_space_before_subcommand` | `gitbranch` → `git branch` |
+| `quotation_marks` | Makes mismatched quotes match: `'text"` → `"text"` |
+| `sudo_command_from_user_path` | Keeps your `PATH` under `sudo` for a program only you can find |
+| `unsudo` | Drops `sudo` from a command that refuses to run as root |
+| `brew_link` | Previews what `brew link --overwrite` would replace |
+| `brew_reinstall` | Reinstalls a formula that is already installed and up to date |
+| `brew_uninstall` | Adds `--force` to remove every installed version |
+| `go_run` | `go run foo` → `go run foo.go` |
+| `java` | `java Foo.java` → `java Foo` |
+| `javac` | `javac Foo` → `javac Foo.java` |
+| `npm_run_script` | `npm build` → `npm run-script build` for a script in `package.json` |
+| `pip_install` | Installs with `--user` (then `sudo`) after a permission error |
+| `python_execute` | `python foo` → `python foo.py` |
+| `yarn_command_not_found` | Fixes a mistyped yarn command |
 
 `welp rules` lists them. More of thefuck's 170 rules are being ported. Pull requests are welcome.
 

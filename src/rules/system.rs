@@ -6,7 +6,8 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use super::Rule;
+use super::{Rule, replace_arg};
+use crate::command::Command;
 
 pub fn rules() -> Vec<Rule> {
     vec![
@@ -86,6 +87,83 @@ pub fn rules() -> Vec<Rule> {
                 closest_programs(program, &path_programs())
                     .into_iter()
                     .map(|right| c.replace_word(program, &right))
+                    .collect()
+            },
+        },
+        Rule {
+            name: "man_no_space",
+            description: "Adds the missing space after man",
+            priority: 2000,
+            matches: |c| {
+                c.output_lower().contains("command not found")
+                    && c.script.strip_prefix("man").is_some_and(|rest| {
+                        !rest.is_empty() && !rest.starts_with(char::is_whitespace)
+                    })
+            },
+            fixes: |c| {
+                c.script
+                    .strip_prefix("man")
+                    .map(|rest| format!("man {rest}"))
+                    .into_iter()
+                    .collect()
+            },
+        },
+        Rule {
+            name: "missing_space_before_subcommand",
+            description: "Adds the missing space after a program name: gitbranch to git branch",
+            priority: 4000,
+            matches: |c| unspaced(c).is_some(),
+            fixes: |c| {
+                unspaced(c)
+                    .map(|(program, _)| format!("{program} {}", &c.script[program.len()..]))
+                    .into_iter()
+                    .collect()
+            },
+        },
+        Rule {
+            name: "quotation_marks",
+            description: "Makes mismatched quotes match: 'text\" to \"text\"",
+            priority: 1000,
+            // Both kinds in one command is often fine (`echo "it's"`), so
+            // this waits for quotes that do not pair up.
+            matches: |c| {
+                c.script.contains('\'')
+                    && c.script.contains('"')
+                    && shell_words::split(&c.script).is_err()
+            },
+            fixes: |c| vec![c.script.replace('\'', "\"")],
+        },
+        Rule {
+            name: "sudo_command_from_user_path",
+            description: "Keeps your PATH under sudo for a program only you can find",
+            priority: 1000,
+            matches: |c| {
+                c.parts.first().is_some_and(|p| p == "sudo") && user_path_command(c).is_some()
+            },
+            fixes: |c| {
+                user_path_command(c)
+                    .map(|name| replace_arg(&c.script, name, &format!("env \"PATH=$PATH\" {name}")))
+                    .into_iter()
+                    .collect()
+            },
+        },
+        Rule {
+            name: "unsudo",
+            description: "Drops sudo from a command that refuses to run as root",
+            priority: 1000,
+            matches: |c| {
+                c.parts.first().is_some_and(|p| p == "sudo")
+                    && c.output_lower()
+                        .contains("you cannot perform this operation as root")
+            },
+            fixes: |c| {
+                c.script
+                    .strip_prefix("sudo")
+                    .map(str::trim_start)
+                    // `sudo -u somebody ...` is deliberate; leave it.
+                    .filter(|rest| !rest.is_empty() && !rest.starts_with('-'))
+                    .map(str::to_string)
+                    .into_iter()
                     .collect()
             },
         },
@@ -178,6 +256,39 @@ const BUILTINS: &[&str] = &[
     "end",
 ];
 
+static SUDO_NOT_FOUND: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"sudo: (.*): command not found").unwrap());
+
+/// The program sudo could not find although it is on the user's PATH.
+fn user_path_command(command: &Command) -> Option<&str> {
+    let found = SUDO_NOT_FOUND.captures(&command.output)?;
+    let name = found.get(1)?.as_str();
+    find_in_path(name).is_some().then_some(name)
+}
+
+/// The program and what follows it when the first word is a known program
+/// with something stuck on the end: `gitbranch`, `ls-la`.
+fn unspaced(command: &Command) -> Option<(String, String)> {
+    let word = command.parts.first()?;
+    let output = command.output_lower();
+    if word.contains('/') || !(output.is_empty() || output.contains("not found")) {
+        return None;
+    }
+    split_program(word, &path_programs())
+}
+
+/// The longest known program (of 2+ letters) the word starts with.
+fn split_program(word: &str, known: &BTreeSet<String>) -> Option<(String, String)> {
+    if known.contains(word) {
+        return None;
+    }
+    known
+        .iter()
+        .filter(|name| name.len() > 1 && word.len() > name.len() && word.starts_with(name.as_str()))
+        .max_by_key(|name| name.len())
+        .map(|name| (name.clone(), word[name.len()..].to_string()))
+}
+
 fn find_in_path(program: &str) -> Option<std::path::PathBuf> {
     env::split_paths(&env::var_os("PATH")?)
         .map(|dir| dir.join(program))
@@ -215,7 +326,7 @@ pub fn closest_programs(wrong: &str, known: &BTreeSet<String>) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::rules::fixes_for;
+    use crate::rules::{fixes_for, offers, rule_matches};
 
     #[test]
     fn sudo_after_permission_denied() {
@@ -256,5 +367,156 @@ mod tests {
         let fixes = fixes_for("welp-not-a-real-program-x", "");
         assert!(fixes.is_empty());
         assert_eq!(fixes_for("sl", "")[0], "ls");
+    }
+
+    #[test]
+    fn man_missing_a_space() {
+        assert_eq!(
+            fixes_for("mandiff", "sh: mandiff: command not found")[0],
+            "man diff"
+        );
+        assert!(offers(
+            "mandiff",
+            "zsh: command not found: mandiff",
+            "man diff"
+        ));
+        assert!(!rule_matches("man_no_space", "mandiff", ""));
+        assert!(!rule_matches("man_no_space", "", ""));
+        assert!(!rule_matches(
+            "man_no_space",
+            "man",
+            "sh: man: command not found"
+        ));
+        assert!(!rule_matches(
+            "man_no_space",
+            "man ls",
+            "sh: man: command not found"
+        ));
+    }
+
+    #[test]
+    fn space_before_the_subcommand() {
+        let known: BTreeSet<String> = ["git", "ls", "npm", "w", "watch"].map(String::from).into();
+        for (word, program, rest) in [
+            ("gitbranch", "git", "branch"),
+            ("ls-la", "ls", "-la"),
+            ("npminstall", "npm", "install"),
+            ("watchls", "watch", "ls"),
+        ] {
+            assert_eq!(
+                split_program(word, &known),
+                Some((program.to_string(), rest.to_string())),
+                "{word}"
+            );
+        }
+        assert_eq!(split_program("git", &known), None);
+        assert_eq!(split_program("vimfile", &known), None);
+        // one-letter programs do not count
+        assert_eq!(split_program("wx", &known), None);
+    }
+
+    #[test]
+    fn space_before_the_subcommand_on_this_machine() {
+        assert!(offers("ls-la", "sh: ls-la: command not found", "ls -la"));
+        assert!(offers("ls-la /tmp", "", "ls -la /tmp"));
+        // something is wrong that a space would not fix
+        assert!(!rule_matches(
+            "missing_space_before_subcommand",
+            "ls-la",
+            "ls: no such file"
+        ));
+        assert!(!rule_matches(
+            "missing_space_before_subcommand",
+            "ls -la",
+            "sh: ls: command not found"
+        ));
+        assert!(!rule_matches(
+            "missing_space_before_subcommand",
+            "./ls-la",
+            ""
+        ));
+    }
+
+    #[test]
+    fn mismatched_quotes() {
+        for (script, fix) in [
+            (
+                "git commit -m 'My Message\"",
+                "git commit -m \"My Message\"",
+            ),
+            (
+                "git commit -am \"Mismatched Quotation Marks'",
+                "git commit -am \"Mismatched Quotation Marks\"",
+            ),
+            ("echo \"hello'", "echo \"hello\""),
+        ] {
+            assert!(offers(script, "", fix), "{script}");
+        }
+        // quotes that pair up are not a typo
+        for script in [
+            "echo \"it's\"",
+            "echo 'say \"hi\"'",
+            "echo 'a' \"b\"",
+            "echo 'a'",
+            "echo \"b\"",
+        ] {
+            assert!(!rule_matches("quotation_marks", script, ""), "{script}");
+        }
+    }
+
+    #[test]
+    fn sudo_with_your_path() {
+        // sh is on every PATH
+        let output = "sudo: sh: command not found";
+        assert!(offers(
+            "sudo sh -c 'echo hi'",
+            output,
+            "sudo env \"PATH=$PATH\" sh -c 'echo hi'"
+        ));
+        assert!(offers(
+            "sudo -u app sh run.sh",
+            output,
+            "sudo -u app env \"PATH=$PATH\" sh run.sh"
+        ));
+        assert!(!rule_matches(
+            "sudo_command_from_user_path",
+            "sh --version",
+            output
+        ));
+        assert!(!rule_matches(
+            "sudo_command_from_user_path",
+            "sudo sh --version",
+            ""
+        ));
+        // not on PATH either: nothing to carry over
+        assert!(!rule_matches(
+            "sudo_command_from_user_path",
+            "sudo welp-nope-x",
+            "sudo: welp-nope-x: command not found"
+        ));
+    }
+
+    #[test]
+    fn unsudo() {
+        let root = "you cannot perform this operation as root";
+        assert_eq!(fixes_for("sudo ls", root)[0], "ls");
+        assert!(offers(
+            "sudo pacaur -S helloworld",
+            root,
+            "pacaur -S helloworld"
+        ));
+        assert!(offers(
+            "sudo brew install x",
+            "Running Homebrew as root is extremely dangerous. You cannot perform this operation as root",
+            "brew install x"
+        ));
+        assert!(!rule_matches("unsudo", "", ""));
+        assert!(!rule_matches("unsudo", "sudo ls", "Permission denied"));
+        assert!(!rule_matches("unsudo", "ls", root));
+        assert!(
+            fixes_for("sudo -u somebody ls", root)
+                .iter()
+                .all(|fix| fix.starts_with("sudo"))
+        );
     }
 }
