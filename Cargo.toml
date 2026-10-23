@@ -1,0 +1,23 @@
+[package]
+name = "welp"
+version = "0.1.0"
+edition = "2024"
+description = "Fixes the command you just typed wrong. A fast successor to thefuck."
+license = "MIT"
+repository = "https://github.com/Oliv3rmoon/welp"
+readme = "README.md"
+keywords = ["cli", "shell", "thefuck", "terminal", "typo"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+clap = { version = "4.6.7", features = ["derive"] }
+crossterm = "0.29.0"
+dirs = "7.0.0"
+regex = "1.13.1"
+serde = { version = "1.0.229", features = ["derive"] }
+shell-words = "1.1.1"
+strsim = "0.11.1"
+toml = "1.1.8"
+
+[dev-dependencies]
+tempfile = "3.27.0"
