@@ -26,7 +26,7 @@ const MARK: &str = "# disabled by welp migrate: ";
 pub fn migrate(home: &Path, config: &Path, dry_run: bool) -> std::io::Result<Report> {
     let mut report = Report::default();
 
-    for shell in [Shell::Bash, Shell::Zsh, Shell::Fish] {
+    for shell in Shell::ALL {
         for name in shell.config_files() {
             let path = home.join(name);
             let Ok(text) = fs::read_to_string(&path) else {

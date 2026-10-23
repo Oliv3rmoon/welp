@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -20,3 +20,21 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
+      - name: PowerShell setup loads and fixes a command
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cargo build
+          $env:PATH = "$PWD\target\debug;$env:PATH"
+          Invoke-Expression (& welp init powershell --alias fuck | Out-String)
+          if (-not (Get-Command fuck -CommandType Function)) { throw "fuck function missing" }
+          $fix = & welp fix "gti --version" --yes
+          if ($fix -ne "git --version") { throw "expected git --version, got: $fix" }
+      - name: tcsh setup fixes a command
+        if: runner.os == 'macOS'
+        run: |
+          cargo build
+          export PATH="$PWD/target/debug:$PATH" NO_COLOR=1
+          out=$(printf 'eval `welp init tcsh --alias fuck`\ngti --version\nfuck --yeah\nexit\n' | tcsh -f -i 2>&1)
+          echo "$out"
+          echo "$out" | grep -q "git version"

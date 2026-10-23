@@ -290,9 +290,7 @@ fn split_program(word: &str, known: &BTreeSet<String>) -> Option<(String, String
 }
 
 fn find_in_path(program: &str) -> Option<std::path::PathBuf> {
-    env::split_paths(&env::var_os("PATH")?)
-        .map(|dir| dir.join(program))
-        .find(|path| path.is_file())
+    crate::runner::find_in_path(program)
 }
 
 fn path_programs() -> BTreeSet<String> {
@@ -303,6 +301,16 @@ fn path_programs() -> BTreeSet<String> {
         .filter_map(|dir| fs::read_dir(dir).ok())
         .flatten()
         .filter_map(|entry| entry.ok()?.file_name().into_string().ok())
+        // On Windows `git.exe` is typed as `git`.
+        .map(|name| match name.rsplit_once('.') {
+            Some((stem, ext))
+                if cfg!(windows)
+                    && ["exe", "cmd", "bat", "com"].contains(&ext.to_lowercase().as_str()) =>
+            {
+                stem.to_string()
+            }
+            _ => name,
+        })
         .chain(BUILTINS.iter().map(|name| name.to_string()))
         .collect()
 }

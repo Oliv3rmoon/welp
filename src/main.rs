@@ -40,8 +40,8 @@ enum Action {
     Fix {
         /// The command to fix. Defaults to the last one in WELP_HISTORY.
         command: Option<String>,
-        /// Run the first fix without asking.
-        #[arg(short, long)]
+        /// Run the first fix without asking (thefuck's `--yeah` works too).
+        #[arg(short, long, visible_alias = "yeah")]
         yes: bool,
     },
     /// Move from thefuck: switch your shell config and import its settings.

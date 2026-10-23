@@ -20,6 +20,8 @@ jobs:
             os: ubuntu-latest
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-24.04-arm
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -28,14 +30,26 @@ jobs:
           targets: ${{ matrix.target }}
       - run: cargo build --release --locked --target ${{ matrix.target }}
       - name: Package
+        if: runner.os != 'Windows'
         run: |
           name=welp-${GITHUB_REF_NAME}-${{ matrix.target }}
           mkdir "$name"
           cp target/${{ matrix.target }}/release/welp README.md LICENSE "$name"/
           tar -czf "$name.tar.gz" "$name"
           shasum -a 256 "$name.tar.gz" > "$name.tar.gz.sha256"
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $name = "welp-$env:GITHUB_REF_NAME-${{ matrix.target }}"
+          New-Item -ItemType Directory $name | Out-Null
+          Copy-Item target/${{ matrix.target }}/release/welp.exe, README.md, LICENSE $name
+          Compress-Archive -Path $name -DestinationPath "$name.zip"
+          (Get-FileHash "$name.zip" -Algorithm SHA256).Hash.ToLower() + "  $name.zip" | Out-File -Encoding ascii "$name.zip.sha256"
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             welp-*.tar.gz
             welp-*.tar.gz.sha256
+            welp-*.zip
+            welp-*.zip.sha256
