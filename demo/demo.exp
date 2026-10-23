@@ -1,0 +1,35 @@
+#!/usr/bin/expect -f
+# Types into a real zsh at human speed, so the recording shows welp as it is.
+# Run through record.sh.
+set timeout 20
+set send_human {.07 .14 1 .04 .25}
+set prompt "❯"
+
+proc run {text} {
+    global prompt
+    expect $prompt
+    sleep 0.7
+    send -h -- $text
+    sleep 0.35
+    send "\r"
+}
+
+proc fix {} {
+    global prompt
+    run "welp"
+    expect "ctrl+c]"
+    sleep 1.4
+    send "\r"
+}
+
+spawn -noecho zsh -i
+run "gti status"
+fix
+run "git push"
+fix
+run "mkdir src/components/ui"
+fix
+run "cd.."
+fix
+expect $prompt
+sleep 2.5

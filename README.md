@@ -8,7 +8,7 @@ A fast, single-binary successor to <a href="https://github.com/nvbn/thefuck">the
 <a href="https://discord.gg/pSqgRU3YP9"><img src="https://img.shields.io/badge/Discord-The%20Commons-5865F2?style=flat&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
-<!-- TODO: demo GIF here (record with vhs or asciinema) -->
+<p align="center"><img src="docs/demo.gif" alt="welp fixing a mistyped command, a git push with no upstream, a mkdir with missing folders and cd.." width="900"></p>
 
 ```console
 $ gti push
@@ -113,6 +113,8 @@ Rule {
 ```
 
 Run `cargo test` before opening a pull request.
+
+The demo above is a real session: `demo/record.sh` sets up a throwaway repo and types the commands into zsh.
 
 ## Support
 
