@@ -18,3 +18,26 @@ unsetopt beep
 PROMPT_EOL_MARK=''
 eval "$(welp init zsh)"
 RC
+# A lived-in history for welp stats, so the first fix in the demo is the 100th.
+mkdir -p "$root/state/welp"
+cat > "$root/state/welp/stats.toml" <<'STATS'
+total = 99
+since = 1788566400
+
+[rules]
+git_push = 31
+no_command = 22
+git_not_command = 14
+sudo = 9
+cd_parent = 6
+mkdir_p = 5
+sl_ls = 5
+did_you_mean = 4
+git_stash = 3
+
+[typos]
+"gti → git" = 12
+"sl → ls" = 5
+"pyhton → python" = 3
+"pul → push" = 2
+STATS

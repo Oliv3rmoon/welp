@@ -8,30 +8,56 @@ set prompt "❯"
 proc run {text} {
     global prompt
     expect $prompt
-    sleep 0.7
+    sleep 0.6
     send -h -- $text
-    sleep 0.35
+    sleep 0.3
     send "\r"
 }
 
+# welp shows its fix; take it after a beat.
 proc fix {} {
-    global prompt
     run "welp"
     expect "esc nah"
-    sleep 1.4
+    sleep 1.2
     send "\r"
+}
+
+# A clean screen between scenes, the way you'd press ctrl-l.
+proc cut {} {
+    global prompt
+    expect $prompt
+    sleep 1.4
+    send "\x0c"
 }
 
 spawn -noecho zsh -i
+
+# 1. a typo
 run "gti status"
 fix
-run "git push"
+
+# 2. two possible fixes: pick the second with the arrow key, which leads
+#    straight into welp's best-known fix
+cut
+run "git pul"
+run "welp"
+expect "esc nah"
+sleep 1.2
+send "\033\[B"
+sleep 1.0
+send "\r"
 fix
-run "mkdir src/components/ui"
-fix
+
+# 3. a missing space
+cut
 run "cd.."
 fix
+
+# 4. nothing to fix, then what welp remembers
+run "cat notes.txt"
+run "welp"
+cut
 run "welp stats"
 expect "verdict"
 expect $prompt
-sleep 3
+sleep 3.5
