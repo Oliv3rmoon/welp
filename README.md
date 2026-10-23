@@ -1,10 +1,11 @@
-<h1 align="center">welp</h1>
+<p align="center"><img src="docs/logo.svg" alt="welp" width="420"></p>
 
 <p align="center"><b>Typed it wrong? Type <code>welp</code>.</b><br>
-It fixes the command you just messed up, and doesn't make a big deal about it.<br>
-A fast, single-binary successor to <a href="https://github.com/nvbn/thefuck">thefuck</a>, with a one-command move from it.</p>
+It fixes the command you just messed up, shrugs, and moves on.<br>
+The fast, friendly successor to <a href="https://github.com/nvbn/thefuck">thefuck</a>, with a one-command move from it.</p>
 
 <p align="center">
+<a href="https://crates.io/crates/welp"><img src="https://img.shields.io/crates/v/welp?color=FFCC4D&labelColor=141414" alt="crates.io"></a>
 <a href="https://buymeacoffee.com/oliv3rmoon"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=flat&logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
 <a href="https://discord.gg/pSqgRU3YP9"><img src="https://img.shields.io/badge/Discord-The%20Commons-5865F2?style=flat&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
@@ -20,14 +21,50 @@ project ❯ welp
 
 ## Why welp
 
-thefuck is one of the most-loved command-line tools ever made. It has also had no release since January 2022, and it breaks on Python 3.12 and newer (`No module named 'imp'`). welp keeps what made it great and quietly fixes the rest:
+thefuck is one of the most-loved command-line tools ever made. It has also had no release since January 2022, and it breaks on Python 3.12 and newer (`No module named 'imp'`). welp keeps what made it great and quietly fixes the rest.
 
-- **No Python.** One small binary that starts instantly, on any Python version or none.
-- **Safe.** welp never runs destructive or interactive commands (`rm`, `mv`, `dd`, editors, `ssh`, ...) a second time just to read their output. Rules that need to know more look at your files instead.
-- **Moves your setup for you.** `welp migrate` switches your shell config, keeps your alias (yes, `fuck` still works) and imports your settings.
-- **Same rule names.** Your thefuck `exclude_rules` keep working.
-- **Workplace-friendly name.** Use whatever alias you like.
-- **A little personality.** Lowercase, low-key, and the occasional "happens to the best of us." Set `quiet = true` if you'd rather it just did its job.
+| | thefuck | welp |
+|---|---|---|
+| Needs Python | yes | no, one small binary |
+| Last release | January 2022 | active |
+| Speed | starts Python every time | starts in about 3 ms, a typical fix in about 20 ms |
+| Runs a failed command again to read its output | every command | never `rm`, `mv`, `dd`, editors, `ssh` and the like |
+| `fuck --yeah` | yes | yes |
+| Moves your setup over | | `welp migrate` keeps your alias and settings |
+| Your own rules | Python files | TOML files, no code needed |
+| Personality | the name | a shrug, three voices, `welp stats` |
+| Shells | bash, zsh, fish, tcsh, PowerShell | bash, zsh, fish |
+
+Speed measured on a MacBook Pro with `welp fix`; your numbers will vary. Rule names match thefuck's, so your `exclude_rules` keep working.
+
+## Meet the voice
+
+welp is lowercase, low-key and a little dry. It shrugs when it has nothing, has a line for particular fixes, marks milestones and notices when you keep making the same typo:
+
+```console
+project ❯ welp
+ welp  git status
+        gti → git, 10 times now. we don't have to talk about it.
+
+project ❯ welp
+ welp  ¯\_(ツ)_/¯  nothing to fix here. that one's all you.
+```
+
+Pick a voice in your settings: `chill` (the default, a line now and then), `spicy` (teases you every time) or `quiet` (just the fix).
+
+`welp stats` shows what it remembers:
+
+```console
+project ❯ welp stats
+ welp  your mistakes, lovingly kept
+
+        fixes         142 since oct 22, 2026
+        favorite rule git_push (38)
+        top typos     gti → git (14) · sl → ls (5) · pyhton → python (3)
+        verdict       you and git have a thing going on.
+```
+
+It keeps only counts, rule names and the mistyped words, never your commands, in `~/.local/state/welp/stats.toml`. Set `remember = false` to turn it off.
 
 ## Install
 
@@ -95,12 +132,27 @@ wait_slow_command = 15
 slow_commands = ["lein", "react-native", "gradle", "./gradlew", "vagrant"]
 no_rerun = ["rm", "mv", "dd", "vim", "ssh"]  # never run these twice (the full default list is longer)
 exclude_rules = []
-quiet = false                 # true keeps the occasional one-liners to itself
+voice = "chill"               # chill, spicy or quiet
+remember = true               # false stops welp stats from counting
 ```
 
 Set `NO_COLOR` to drop the colours; welp keeps the words.
 
-## Adding a rule
+## Your own rules
+
+Teach welp a fix without writing code: drop a TOML file in `~/.config/welp/rules/`.
+
+```toml
+# ~/.config/welp/rules/please.toml
+name = "please"
+description = "please → sudo"
+script = '^please (?P<rest>.+)$'
+fix = "sudo {rest}"
+```
+
+A rule can check the `program`, a regex on the command (`script`) and a regex on what it printed (`output`). Its `fix` (or a list of `fixes`) can use `{script}` and any named group from those regexes. Your fixes are offered first; add `first = false` to offer them after welp's own. `welp rules` lists yours and says what's wrong with any file it can't read.
+
+## Adding a rule to welp
 
 A rule is a name, a check and a fix, in `src/rules/`. Each comes with a test that feeds it a command and the output a real tool printed:
 
